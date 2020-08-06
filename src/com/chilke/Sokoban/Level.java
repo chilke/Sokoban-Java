@@ -22,7 +22,13 @@ public class Level {
     private final ArrayList<Wall> walls = new ArrayList();
     private Man man;
 
+    private int moves;
+    private int pushes;
+
     private boolean complete;
+
+    private ArrayList<ArrayList<Move>> movesLists = new ArrayList<>();
+    private ArrayList<Move> movesList = new ArrayList<>();
 
     public Level(String name, int width, int height, String[] startGrid) {
         this.name = name;
@@ -122,6 +128,25 @@ public class Level {
         return null;
     }
 
+    public Move getLastMove() {
+        Move ret = null;
+        if (!movesLists.isEmpty()) {
+            ArrayList<Move> last = movesLists.get(movesLists.size()-1);
+            if (!last.isEmpty()) {
+                ret = last.remove(last.size()-1);
+            } else {
+                movesLists.remove(movesLists.size()-1);
+            }
+        }
+
+        return ret;
+    }
+
+    public void endMove() {
+        movesLists.add(movesList);
+        movesList = new ArrayList<>();
+    }
+
     public void doMove(Move m) {
 //        System.out.format("Moving from (%d, %d) in %s\n", man.getCol(), man.getRow(), m.getDir().toString());
         Pack p = m.getPushedPack();
@@ -150,6 +175,49 @@ public class Level {
                     movePack(p, p.getCol(), p.getRow()+1);
                 }
                 break;
+        }
+
+        moves++;
+        if (p != null) {
+            pushes++;
+        }
+
+        movesList.add(m);
+    }
+
+    public void undoMove(Move m) {
+//        System.out.format("Moving from (%d, %d) in %s\n", man.getCol(), man.getRow(), m.getDir().toString());
+        Pack p = m.getPushedPack();
+        switch (m.getDir()) {
+            case LEFT:
+                moveMan(man.getCol()+1, man.getRow());
+                if (p != null) {
+                    movePack(p, p.getCol()+1, p.getRow());
+                }
+                break;
+            case RIGHT:
+                moveMan(man.getCol()-1, man.getRow());
+                if (p != null) {
+                    movePack(p, p.getCol()-1, p.getRow());
+                }
+                break;
+            case UP:
+                moveMan(man.getCol(), man.getRow()+1);
+                if (p != null) {
+                    movePack(p, p.getCol(), p.getRow()+1);
+                }
+                break;
+            case DOWN:
+                moveMan(man.getCol(), man.getRow()-1);
+                if (p != null) {
+                    movePack(p, p.getCol(), p.getRow()-1);
+                }
+                break;
+        }
+
+        moves--;
+        if (p != null) {
+            pushes--;
         }
     }
 
@@ -283,5 +351,13 @@ public class Level {
 
     public Man getMan() {
         return man;
+    }
+
+    public int getMoves() {
+        return moves;
+    }
+
+    public int getPushes() {
+        return pushes;
     }
 }

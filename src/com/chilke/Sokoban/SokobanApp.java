@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 public class SokobanApp {
     private final static int MIN_WIDTH = 640;
@@ -35,6 +34,29 @@ public class SokobanApp {
 
     private LevelSet currentLevelSet = null;
     private Level currentLevel = null;
+
+    private JLabel movesLabel = null;
+    private JLabel pushesLabel = null;
+
+    private JPanel createFooterPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        panel.add(new JLabel("Moves:"));
+        movesLabel = new JLabel("0");
+        movesLabel.setPreferredSize(new Dimension(40, 16));
+        panel.add(movesLabel);
+        panel.add(new JLabel("Pushes:"));
+        pushesLabel = new JLabel("0");
+        pushesLabel.setPreferredSize(new Dimension(40, 16));
+        panel.add(pushesLabel);
+
+        return panel;
+    }
+
+    public void updateMoves() {
+        movesLabel.setText(String.valueOf(levelPanel.getLevel().getMoves()));
+        pushesLabel.setText(String.valueOf(levelPanel.getLevel().getPushes()));
+    }
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -125,13 +147,15 @@ public class SokobanApp {
         frame.setLocation(curX, curY);
         frame.setLayout(new BorderLayout());
 
-        levelPanel = new LevelPanel();
+        levelPanel = new LevelPanel(this);
 
         frame.add(createHeaderPanel(), BorderLayout.PAGE_START);
         JScrollPane scroller = new JScrollPane(levelPanel);
         scroller.setBorder(null);
 
         frame.add(scroller, BorderLayout.CENTER);
+
+        frame.add(createFooterPanel(), BorderLayout.PAGE_END);
     }
 
     private void run() {

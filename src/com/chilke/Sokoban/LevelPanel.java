@@ -22,7 +22,7 @@ public class LevelPanel extends JPanel {
     private int moveEndTime = 500;
 
     private int frameTime = 1000/60;
-    private int moveAnimationMs = 50;
+    private int moveAnimationMs = 20;
     private long moveStartTime;
     private int currentMoveX = 0;
     private int currentMoveY = 0;
@@ -50,7 +50,12 @@ public class LevelPanel extends JPanel {
     private int currentPulseId = 0;
     private boolean pulseIncreasing = true;
 
-    public LevelPanel() {
+    private boolean isUndoing = false;
+
+    private SokobanApp app;
+
+    public LevelPanel(SokobanApp app) {
+        this.app = app;
         level = null;
         skin = null;
         skinSize = DEFAULT_SIZE;
@@ -75,6 +80,10 @@ public class LevelPanel extends JPanel {
                 drawStaticLevel();
             }
         });
+    }
+
+    public Level getLevel() {
+        return level;
     }
 
     private void drawBackground() {
@@ -260,46 +269,114 @@ public class LevelPanel extends JPanel {
         movesIndex = 0;
         hasMoved = false;
         moveStartTime = System.currentTimeMillis();
+        currentMove = moves.get(0);
         animationTimer.start();
+    }
+
+    private void undoMove() {
+        currentMove = level.getLastMove();
+        if (currentMove != null) {
+            hasMoved = false;
+            moveStartTime = System.currentTimeMillis();
+            isUndoing = true;
+            animationTimer.start();
+        }
     }
 
     private ActionListener animationAction = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (moves != null) {
-                int ms = (int) (System.currentTimeMillis() - moveStartTime);
-                currentMove = moves.get(movesIndex);
-                pushedPack = currentMove.getPushedPack();
-                float fraction = (float) ms / (float) moveAnimationMs;
-                int movedAmt = (int) (fraction * (float) skinSize);
+                moveEndTimer.stop();
+                long currentTime = System.currentTimeMillis();
+                int offsetTime = (int) (currentTime - moveStartTime);
 
-                if (fraction >= 0.5) {
+                while (offsetTime >= moveAnimationMs && currentMove != null) {
                     if (!hasMoved) {
                         level.doMove(currentMove);
-                        hasMoved = true;
+                        app.updateMoves();
                     }
-
-                    movedAmt -= skinSize;
-                }
-
-                if (fraction >= 1.0) {
                     currentMoveX = 0;
                     currentMoveY = 0;
-                    movesIndex++;
                     hasMoved = false;
+                    movesIndex++;
                     if (movesIndex >= moves.size()) {
-                        moves = null;
-                        animationTimer.stop();
-                        moveEndTimer.start();
+                        currentMove = null;
                     } else {
-                        moveStartTime = System.currentTimeMillis();
+                        currentMove = moves.get(movesIndex);
+                    }
+                    moveStartTime += moveAnimationMs;
+                    offsetTime = (int)(currentTime - moveStartTime);
+                }
+                if (currentMove == null) {
+                    level.endMove();
+                    moves = null;
+                    animationTimer.stop();
+                    if (moveAnimationMs > 0) {
+                        moveEndTimer.start();
                     }
                 } else {
+                    pushedPack = currentMove.getPushedPack();
+                    int offsetDistance = (offsetTime * skinSize) / moveAnimationMs;
+                    if (offsetDistance > skinSize/2) {
+                        if (!hasMoved) {
+                            level.doMove(currentMove);
+                            app.updateMoves();
+                            hasMoved = true;
+                        }
+                        offsetDistance -= skinSize;
+                    }
+
                     switch (currentMove.getDir()) {
-                        case UP -> currentMoveY = -movedAmt;
-                        case DOWN -> currentMoveY = movedAmt;
-                        case LEFT -> currentMoveX = -movedAmt;
-                        case RIGHT -> currentMoveX = movedAmt;
+                        case UP -> currentMoveY = -offsetDistance;
+                        case DOWN -> currentMoveY = offsetDistance;
+                        case LEFT -> currentMoveX = -offsetDistance;
+                        case RIGHT -> currentMoveX = offsetDistance;
+                    }
+                }
+            } else if (isUndoing) {
+                moveEndTimer.stop();
+
+                long currentTime = System.currentTimeMillis();
+
+                int offsetTime = (int)(currentTime - moveStartTime);
+
+                while (offsetTime >= moveAnimationMs && currentMove != null) {
+                    if (!hasMoved) {
+                        level.undoMove(currentMove);
+                        app.updateMoves();
+                    }
+                    currentMoveX = 0;
+                    currentMoveY = 0;
+                    hasMoved = false;
+                    currentMove = level.getLastMove();
+                    moveStartTime += moveAnimationMs;
+                    offsetTime = (int)(currentTime - moveStartTime);
+                }
+
+                if (currentMove == null) {
+                    isUndoing = false;
+                    animationTimer.stop();
+                    if (moveAnimationMs > 0) {
+                        moveEndTimer.start();
+                    }
+                } else {
+                    pushedPack = currentMove.getPushedPack();
+                    int offsetDistance = -(offsetTime * skinSize) / moveAnimationMs;
+                    if (offsetDistance > skinSize/2) {
+                        if (!hasMoved) {
+                            level.undoMove(currentMove);
+                            app.updateMoves();
+                            hasMoved = true;
+                        }
+                        offsetDistance -= skinSize;
+                    }
+
+                    switch (currentMove.getDir()) {
+                        case UP -> currentMoveY = -offsetDistance;
+                        case DOWN -> currentMoveY = offsetDistance;
+                        case LEFT -> currentMoveX = -offsetDistance;
+                        case RIGHT -> currentMoveX = offsetDistance;
                     }
                 }
             } else if (selectedPack != null) {
@@ -425,15 +502,19 @@ public class LevelPanel extends JPanel {
                     break;
             }
 
-            if (moveDir != Direction.NONE && !level.isComplete() && moves == null) {
-                Move m = level.getMove(moveDir);
-                if (m != null) {
-                    manMarkers = null;
-                    packMarkers = null;
-                    selectedPack = null;
-                    moves = new ArrayList<Move>();
-                    moves.add(m);
-                    animateMoves();
+            if (!level.isComplete() && !animationTimer.isRunning()) {
+                if (moveDir != Direction.NONE) {
+                    Move m = level.getMove(moveDir);
+                    if (m != null) {
+                        manMarkers = null;
+                        packMarkers = null;
+                        selectedPack = null;
+                        moves = new ArrayList<Move>();
+                        moves.add(m);
+                        animateMoves();
+                    }
+                } else if (key == KeyEvent.VK_BACK_SPACE) {
+                    undoMove();
                 }
             }
         }
