@@ -27,16 +27,11 @@ public class LevelSetSelector {
 
         File levelsDir = new File(p.toString());
         if (levelsDir.exists() && levelsDir.isDirectory()) {
-            FilenameFilter filter = new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".slc");
-                }
-            };
+            FilenameFilter filter = (dir, name) -> name.endsWith(".slc");
             File[] files = levelsDir.listFiles(filter);
             for (File levelsFile : files) {
                 if (levelsFile.isFile()) {
-                    System.out.println(levelsFile.getName());
+                    FileData file = SokoData.getInstance().getFile(levelsFile.getName());
                     LevelSet ls = new LevelSet(levelsFile);
                     levelSets.put(ls.getTitle(), ls);
                     levelSetTitles.add(ls.getTitle());

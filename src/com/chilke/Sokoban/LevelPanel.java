@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class LevelPanel extends JPanel {
-    private static final int DEFAULT_SIZE = 30;
 
     private Level level;
     private Skin skin;
@@ -22,7 +21,7 @@ public class LevelPanel extends JPanel {
     private int moveEndTime = 500;
 
     private int frameTime = 1000/60;
-    private int moveAnimationMs = 20;
+    private int moveAnimationMs = 200;
     private long moveStartTime;
     private int currentMoveX = 0;
     private int currentMoveY = 0;
@@ -50,6 +49,8 @@ public class LevelPanel extends JPanel {
     private int currentPulseId = 0;
     private boolean pulseIncreasing = true;
 
+    private boolean skipAnimation = false;
+
     private boolean isUndoing = false;
 
     private SokobanApp app;
@@ -58,7 +59,8 @@ public class LevelPanel extends JPanel {
         this.app = app;
         level = null;
         skin = null;
-        skinSize = DEFAULT_SIZE;
+
+        skinSize = Config.getConfig().getSkinSize();
 
         animationTimer = new Timer(frameTime, animationAction);
         moveEndTimer = new Timer(moveEndTime, moveEndAction);
@@ -66,12 +68,6 @@ public class LevelPanel extends JPanel {
         setFocusable(true);
         addKeyListener(keyAdapter);
         addMouseListener(mouseAdapter);
-        AbstractAction doNothing = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-            }
-        };
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -184,17 +180,18 @@ public class LevelPanel extends JPanel {
 
     public int setSize(int size) {
         skinSize = skin.setSkinSize(size);
+        Config.getConfig().setSkinSize(skinSize);
         drawBackground();
         drawStaticLevel();
         return skinSize;
     }
 
-    public int increaseSize() {
-        return setSize(skinSize+1);
+    private void increaseSize() {
+        setSize(skinSize+1);
     }
 
-    public int decreaseSize() {
-        return setSize(skinSize-1);
+    private void decreaseSize() {
+        setSize(skinSize-1);
     }
 
     private void paintPlayPieces(Graphics g) {
@@ -266,20 +263,30 @@ public class LevelPanel extends JPanel {
     }
 
     private void animateMoves() {
-        movesIndex = 0;
-        hasMoved = false;
-        moveStartTime = System.currentTimeMillis();
-        currentMove = moves.get(0);
-        animationTimer.start();
+        if (!level.isComplete()) {
+            app.enableInputs(false);
+            skipAnimation = false;
+            movesIndex = 0;
+            hasMoved = false;
+            moveStartTime = System.currentTimeMillis();
+            currentMove = moves.get(0);
+            animationTimer.start();
+        } else {
+            moves = null;
+        }
     }
 
     private void undoMove() {
-        currentMove = level.getLastMove();
-        if (currentMove != null) {
-            hasMoved = false;
-            moveStartTime = System.currentTimeMillis();
-            isUndoing = true;
-            animationTimer.start();
+        if (!level.isComplete()) {
+            currentMove = level.getLastMove();
+            if (currentMove != null) {
+                app.enableInputs(false);
+                skipAnimation = false;
+                hasMoved = false;
+                moveStartTime = System.currentTimeMillis();
+                isUndoing = true;
+                animationTimer.start();
+            }
         }
     }
 
@@ -291,7 +298,7 @@ public class LevelPanel extends JPanel {
                 long currentTime = System.currentTimeMillis();
                 int offsetTime = (int) (currentTime - moveStartTime);
 
-                while (offsetTime >= moveAnimationMs && currentMove != null) {
+                while ((skipAnimation || offsetTime >= moveAnimationMs) && currentMove != null) {
                     if (!hasMoved) {
                         level.doMove(currentMove);
                         app.updateMoves();
@@ -309,10 +316,15 @@ public class LevelPanel extends JPanel {
                     offsetTime = (int)(currentTime - moveStartTime);
                 }
                 if (currentMove == null) {
+                    skipAnimation = false;
                     level.endMove();
                     moves = null;
                     animationTimer.stop();
-                    if (moveAnimationMs > 0) {
+                    app.enableInputs(true);
+                    if (level.isComplete()) {
+                        level.reset();
+                        app.nextLevel();
+                    } else if (moveAnimationMs > 0) {
                         moveEndTimer.start();
                     }
                 } else {
@@ -341,7 +353,7 @@ public class LevelPanel extends JPanel {
 
                 int offsetTime = (int)(currentTime - moveStartTime);
 
-                while (offsetTime >= moveAnimationMs && currentMove != null) {
+                while ((skipAnimation || offsetTime >= moveAnimationMs) && currentMove != null) {
                     if (!hasMoved) {
                         level.undoMove(currentMove);
                         app.updateMoves();
@@ -355,8 +367,10 @@ public class LevelPanel extends JPanel {
                 }
 
                 if (currentMove == null) {
+                    skipAnimation = false;
                     isUndoing = false;
                     animationTimer.stop();
+                    app.enableInputs(true);
                     if (moveAnimationMs > 0) {
                         moveEndTimer.start();
                     }
@@ -419,61 +433,68 @@ public class LevelPanel extends JPanel {
         public void mouseClicked(MouseEvent e) {
             if (!hasFocus()) {
                 requestFocusInWindow();
-            } else if (e.getButton() == MouseEvent.BUTTON1) {
-                int x = e.getX() - levelOffsetX;
-                int y = e.getY() - levelOffsetY;
+            }
 
-                if (x >= 0 && x < levelImage.getWidth() && y >= 0 && y < levelImage.getHeight()) {
-                    int col = x / skinSize;
-                    int row = y / skinSize;
+            if (!isUndoing && moves == null && !level.isComplete()) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    int x = e.getX() - levelOffsetX;
+                    int y = e.getY() - levelOffsetY;
 
-                    System.out.format("Left click at (%d, %d)\n", col, row);
-                    Pack pack = level.packAt(col, row);
-                    if (pack != null) {
-                        if (pack == selectedPack) {
-                            selectedPack = null;
-                            packMarkers = null;
-                            System.out.println("Unselecting pack");
-                        } else {
-                            System.out.println("Getting pack reachable now");
-                            ArrayList<Position> reachable = MoveHelper.getInstance().getPackReachable(pack, level);
-                            if (!reachable.isEmpty()) {
+                    if (x >= 0 && x < levelImage.getWidth() && y >= 0 && y < levelImage.getHeight()) {
+                        int col = x / skinSize;
+                        int row = y / skinSize;
+
+                        System.out.format("Left click at (%d, %d)\n", col, row);
+                        Pack pack = level.packAt(col, row);
+                        if (pack != null) {
+                            if (pack == selectedPack) {
+                                selectedPack = null;
+                                packMarkers = null;
+                                System.out.println("Unselecting pack");
+                            } else {
+                                System.out.println("Getting pack reachable now");
+                                ArrayList<Position> reachable = MoveHelper.getInstance().getPackReachable(pack, level);
+                                if (!reachable.isEmpty()) {
+                                    manMarkers = null;
+                                    packMarkers = reachable;
+                                    selectedPack = pack;
+                                    currentPulseId = 0;
+                                    pulseIncreasing = true;
+                                    lastPulseTime = System.currentTimeMillis();
+                                    animationTimer.start();
+                                }
+                            }
+                        } else if (selectedPack != null) {
+                            System.out.println("Try moving pack now");
+                            moves = MoveHelper.getInstance().movePack(selectedPack, level, col, row);
+                            if (moves != null) {
+                                packMarkers = null;
+                                selectedPack = null;
+                                animationTimer.stop();
+                                animateMoves();
+                            }
+                        } else if (level.getMan().getCol() == col && level.getMan().getRow() == row) {
+                            if (manMarkers != null) {
                                 manMarkers = null;
-                                packMarkers = reachable;
-                                selectedPack = pack;
-                                currentPulseId = 0;
-                                pulseIncreasing = true;
-                                lastPulseTime = System.currentTimeMillis();
-                                animationTimer.start();
+                            } else {
+                                manMarkers = MoveHelper.getInstance().getReachable(level);
+                            }
+                        } else {
+                            System.out.println("Trying man move");
+                            moves = MoveHelper.getInstance().moveMan(level, col, row);
+                            if (moves != null) {
+                                manMarkers = null;
+                                animateMoves();
+                            } else {
+                                System.out.println("Moves was null");
                             }
                         }
-                    } else if (selectedPack != null) {
-                        System.out.println("Try moving pack now");
-                        moves = MoveHelper.getInstance().movePack(selectedPack, level, col, row);
-                        if (moves != null) {
-                            packMarkers = null;
-                            selectedPack = null;
-                            animationTimer.stop();
-                            animateMoves();
-                        }
-                    } else if (level.getMan().getCol() == col && level.getMan().getRow() == row) {
-                        if (manMarkers != null) {
-                            manMarkers = null;
-                        } else {
-                            manMarkers = MoveHelper.getInstance().getReachable(level);
-                        }
-                    } else {
-                        System.out.println("Trying man move");
-                        moves = MoveHelper.getInstance().moveMan(level, col, row);
-                        if (moves != null) {
-                            manMarkers = null;
-                            animateMoves();
-                        } else {
-                            System.out.println("Moves was null");
-                        }
-                    }
 
-                    repaint();
+                        repaint();
+                    }
+                } else if (SwingUtilities.isRightMouseButton(e)) {
+                    System.out.println("Right Click");
+                    app.showSettings();
                 }
             }
         }
@@ -486,7 +507,7 @@ public class LevelPanel extends JPanel {
             int key = e.getKeyCode();
 
             Direction moveDir = Direction.NONE;
-
+            System.out.println(key);
             switch (key) {
                 case KeyEvent.VK_A:
                     moveDir = Direction.LEFT;
@@ -502,7 +523,18 @@ public class LevelPanel extends JPanel {
                     break;
             }
 
-            if (!level.isComplete() && !animationTimer.isRunning()) {
+            if (key == KeyEvent.VK_ESCAPE) {
+                selectedPack = null;
+                manMarkers = null;
+                packMarkers = null;
+                skipAnimation = true;
+                repaint();
+            } else if (key == KeyEvent.VK_MINUS || key == KeyEvent.VK_SUBTRACT) {
+                decreaseSize();
+            } else if (key == KeyEvent.VK_PLUS || key == KeyEvent.VK_ADD ||
+                    (key == KeyEvent.VK_EQUALS && e.isShiftDown())) {
+                increaseSize();
+            } else if (!level.isComplete() && !isUndoing && moves == null) {
                 if (moveDir != Direction.NONE) {
                     Move m = level.getMove(moveDir);
                     if (m != null) {

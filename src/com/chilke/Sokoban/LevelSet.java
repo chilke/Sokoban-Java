@@ -75,6 +75,10 @@ public class LevelSet {
         }
     }
 
+    public int count() {
+        return levels.size();
+    }
+
     public void loadLevels() {
         File xmlFile = new File(filePath);
         loadFile(xmlFile, true);

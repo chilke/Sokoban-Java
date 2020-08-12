@@ -38,7 +38,6 @@ public class SkinSelector {
 
             for (File skinFile : skinsFiles) {
                 if (skinFile.isFile()) {
-                    System.out.println(skinFile.getName());
                     Skin skin = new Skin(skinFile);
 
                     skinsMap.put(skin.getTitle(), skin);

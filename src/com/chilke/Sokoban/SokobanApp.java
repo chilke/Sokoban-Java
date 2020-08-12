@@ -2,41 +2,94 @@ package com.chilke.Sokoban;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 public class SokobanApp {
-    private final static int MIN_WIDTH = 640;
-    private final static int MIN_HEIGHT = 480;
-
-    private int curWidth = MIN_WIDTH;
-    private int curHeight = MIN_HEIGHT;
-
-    private int curX = 200;
-    private int curY = 100;
-
-    private int curSkinSize = 30;
-
-    private String curSkin = "HeavyMetal";
-
-    private String curLevelSet = "Original & Extra";
-
     private JFrame frame;
     private LevelPanel levelPanel;
 
-    private String[] LevelSets = { "Levels 1", "Levels 2", "Levels 3", "Long Levels 4" };
-    private String[] Levels = { "Level 1", "Level 2", "Level 3", "Level 4" };
-    private String[] Skins = { "Skin 1", "Skin 2", "Skin 3", "Skin 4", "Skin 5" };
-
     //TODO - Move these initializers into a pre-init loop after a loading windows is displayed
-    private LevelSetSelector levelSetSelector = new LevelSetSelector();
-    private SkinSelector skinSelector = new SkinSelector();
+    private final LevelSetSelector levelSetSelector = new LevelSetSelector();
+    private final SkinSelector skinSelector = new SkinSelector();
 
     private LevelSet currentLevelSet = null;
     private Level currentLevel = null;
 
     private JLabel movesLabel = null;
     private JLabel pushesLabel = null;
+
+    JComboBox levelSetsCombo = null;
+    JComboBox levelsCombo = null;
+    JComboBox skinsCombo = null;
+
+    public void showSettings() {
+        SettingsDialog s = new SettingsDialog(frame);
+        s.setVisible(true);
+        System.out.println("Closed");
+    }
+
+    private void makeFullscreen(boolean fullscreen) {
+        if (fullscreen) {
+            frame.dispose();
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setUndecorated(true);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(frame);
+            frame.setVisible(true);
+        } else {
+            frame.dispose();
+            Config config = Config.getConfig();
+            frame.setSize(config.getWidth(), config.getHeight());
+            frame.setLocation(config.getLocationX(), config.getLocationY());
+            frame.setUndecorated(false);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
+            frame.setVisible(true);
+        }
+    }
+
+    private JMenuBar createMenu() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        menuBar.add(fileMenu);
+
+        JMenuItem item = new JMenuItem("Reset");
+        item.setMnemonic(KeyEvent.VK_R);
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
+        item.addActionListener(e -> {
+            currentLevel.reset();
+            updateMoves();
+            levelPanel.repaint();
+        });
+        fileMenu.add(item);
+
+        item = new JMenuItem("Settings");
+        item.setMnemonic(KeyEvent.VK_S);
+        item.addActionListener(e -> showSettings());
+        fileMenu.add(item);
+
+        JCheckBoxMenuItem fullScreen = new JCheckBoxMenuItem("Fullscreen");
+        fullScreen.setMnemonic(KeyEvent.VK_F);
+        fullScreen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK));
+        fullScreen.addActionListener(e -> {
+            System.out.println("In Action Listener");
+            Config.getConfig().setFullScreen(fullScreen.isSelected());
+            makeFullscreen(fullScreen.isSelected());
+        });
+        fullScreen.setSelected(Config.getConfig().isFullScreen());
+        fileMenu.add(fullScreen);
+
+        item = new JMenuItem("Exit");
+        item.setMnemonic(KeyEvent.VK_E);
+        item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+        fileMenu.add(item);
+
+        return menuBar;
+    }
 
     private JPanel createFooterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -54,97 +107,101 @@ public class SokobanApp {
     }
 
     public void updateMoves() {
-        movesLabel.setText(String.valueOf(levelPanel.getLevel().getMoves()));
-        pushesLabel.setText(String.valueOf(levelPanel.getLevel().getPushes()));
+        if (movesLabel != null) {
+            movesLabel.setText(String.valueOf(levelPanel.getLevel().getMoves()));
+            pushesLabel.setText(String.valueOf(levelPanel.getLevel().getPushes()));
+        }
+    }
+
+    public void enableInputs(boolean enabled) {
+        levelSetsCombo.setEnabled(enabled);
+        levelsCombo.setEnabled(enabled);
+        skinsCombo.setEnabled(enabled);
+    }
+
+    public void nextLevel() {
+        int index = levelsCombo.getSelectedIndex() + 1;
+        if (index < levelsCombo.getItemCount()) {
+            levelsCombo.setSelectedIndex(index);
+        } else {
+            index = levelSetsCombo.getSelectedIndex() + 1;
+            if (index < levelSetsCombo.getItemCount()) {
+                levelSetsCombo.setSelectedIndex(index);
+            } else {
+                //TODO - Logic to look for first level set with unsolved level
+                levelSetsCombo.setSelectedIndex(0);
+            }
+        }
     }
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
+        levelSetsCombo = new JComboBox(levelSetSelector.getLevelSetTitles().toArray());
+        levelsCombo = new JComboBox();
+        skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
 
-        JComboBox levelSetsCombo = new JComboBox(levelSetSelector.getLevelSetTitles().toArray());
-        JComboBox levelsCombo = new JComboBox();
-        JComboBox skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
+        skinsCombo.addActionListener(e -> {
+            levelPanel.setSkin(skinSelector.getSkin((String)skinsCombo.getSelectedItem()));
 
-        skinsCombo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                levelPanel.setSkin(skinSelector.getSkin((String)skinsCombo.getSelectedItem()));
-
-                levelPanel.requestFocusInWindow();
-            }
+            levelPanel.requestFocusInWindow();
         });
 
-        levelsCombo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentLevel != null) {
-                    //TODO - Add logic to finalize old level
-                }
-
-                currentLevel = currentLevelSet.getLevel((String)levelsCombo.getSelectedItem());
-
-                levelPanel.setLevel(currentLevel);
-
-                levelPanel.requestFocusInWindow();
+        levelsCombo.addActionListener(e -> {
+            if (currentLevel != null) {
+                //TODO - Add logic to finalize old level
             }
+
+            String level = (String)levelsCombo.getSelectedItem();
+            Config.getConfig().setLevel(level);
+            currentLevel = currentLevelSet.getLevel(level);
+            System.out.println("Hash: "+currentLevel.getExactHash());
+            levelPanel.setLevel(currentLevel);
+            updateMoves();
+            levelPanel.requestFocusInWindow();
         });
 
-        levelSetsCombo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentLevelSet != null) {
-                    currentLevelSet.unloadLevels();
-                }
-                currentLevelSet = levelSetSelector.getLevelSet((String)levelSetsCombo.getSelectedItem());
-                currentLevelSet.loadLevels();
+        levelSetsCombo.addActionListener(e -> {
+            if (currentLevelSet != null) {
+                currentLevelSet.unloadLevels();
+            }
+            String levelSet = (String) levelSetsCombo.getSelectedItem();
+            currentLevelSet = levelSetSelector.getLevelSet(levelSet);
+            currentLevelSet.loadLevels();
 
-                DefaultComboBoxModel model = new DefaultComboBoxModel(currentLevelSet.getLevelNames().toArray());
-                levelsCombo.setModel(model);
+            Config.getConfig().setLevelSet(levelSet);
+
+            DefaultComboBoxModel model = new DefaultComboBoxModel(currentLevelSet.getLevelNames().toArray());
+            levelsCombo.setModel(model);
+
+            if (currentLevel == null) {
+                levelsCombo.setSelectedItem(Config.getConfig().getLevel());
+            } else {
                 levelsCombo.setSelectedIndex(0);
             }
         });
 
-        skinsCombo.setSelectedItem(curSkin);
-        levelSetsCombo.setSelectedItem(curLevelSet);
+        skinsCombo.setSelectedItem(Config.getConfig().getSkin());
+        levelSetsCombo.setSelectedItem(Config.getConfig().getLevelSet());
 
         panel.add(levelSetsCombo);
         panel.add(levelsCombo);
         panel.add(skinsCombo);
-
-        JButton plusButton = new JButton("+");
-        JButton minusButton = new JButton("-");
-        JLabel sizeLabel = new JLabel(String.valueOf(curSkinSize));
-
-        plusButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int s = levelPanel.increaseSize();
-                sizeLabel.setText(String.valueOf(s));
-                levelPanel.requestFocusInWindow();
-            }
-        });
-
-        minusButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int s = levelPanel.decreaseSize();
-                sizeLabel.setText(String.valueOf(s));
-                levelPanel.requestFocusInWindow();
-            }
-        });
-
-        panel.add(minusButton);
-        panel.add(sizeLabel);
-        panel.add(plusButton);
 
         return panel;
     }
 
     private void initUI() {
         frame = new JFrame("Sokoban");
-        frame.setSize(curWidth, curHeight);
-        frame.setLocation(curX, curY);
+        Config config = Config.getConfig();
+        if (config.isFullScreen()) {
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setUndecorated(true);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(frame);
+        } else {
+            frame.setSize(config.getWidth(), config.getHeight());
+            frame.setLocation(config.getLocationX(), config.getLocationY());
+        }
         frame.setLayout(new BorderLayout());
 
         levelPanel = new LevelPanel(this);
@@ -156,6 +213,28 @@ public class SokobanApp {
         frame.add(scroller, BorderLayout.CENTER);
 
         frame.add(createFooterPanel(), BorderLayout.PAGE_END);
+
+        frame.setJMenuBar(createMenu());
+
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                super.componentResized(e);
+                if (frame.getExtendedState() != JFrame.MAXIMIZED_BOTH) {
+                    Config.getConfig().setWidth(frame.getWidth());
+                    Config.getConfig().setHeight(frame.getHeight());
+                }
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                super.componentMoved(e);
+                if (frame.getExtendedState() != JFrame.MAXIMIZED_BOTH) {
+                    Config.getConfig().setLocationX(frame.getX());
+                    Config.getConfig().setLocationY(frame.getY());
+                }
+            }
+        });
     }
 
     private void run() {

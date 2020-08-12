@@ -139,9 +139,6 @@ public class Skin {
                     value = man.value & ~SkinImage.DIR_BIT_AND_MASK;
                 }
             }
-            if (title.equals("HeavyMetal")) {
-                System.out.println("Setting " + man.toString() + " to " + SkinImage.skinImageForValue(value).toString());
-            }
             skinImageIds[man.value] = skinImageIds[value];
         }
     }
@@ -155,7 +152,6 @@ public class Skin {
             case "Wall_Top_X" -> orgWallTopX = Integer.parseInt(parmValue);
             case "Wall_Top_Y" -> orgWallTopY = Integer.parseInt(parmValue);
             case "Transparent" -> transparent = parmValue;
-            default -> System.out.println("Unknown parameter: " + parmName + " = " + parmValue);
         }
     }
 

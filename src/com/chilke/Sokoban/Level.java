@@ -1,6 +1,8 @@
 package com.chilke.Sokoban;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Level {
     private final static char FLOOR_CHAR = ' ';
@@ -20,6 +22,7 @@ public class Level {
     private final ArrayList<Square> goals = new ArrayList();
     private final ArrayList<Square> floors = new ArrayList();
     private final ArrayList<Wall> walls = new ArrayList();
+    private final String[] startGrid;
     private Man man;
 
     private int moves;
@@ -34,9 +37,23 @@ public class Level {
         this.name = name;
         this.width = width;
         this.height = height;
-        complete = false;
+        this.startGrid = startGrid;
 
         grid = new int[height][width];
+
+        reset();
+    }
+
+    public void reset() {
+        complete = false;
+        packs.clear();
+        goals.clear();
+        man = null;
+        floors.clear();
+        walls.clear();
+
+        moves = 0;
+        pushes = 0;
 
         for (int j = 0; j < height; j++) {
             for (int i = 0; i < width; i++) {
@@ -54,17 +71,12 @@ public class Level {
                 if ((grid[j][i] & Square.GOAL) != 0) {
                     Square goal = new Square(i, j, this);
                     goals.add(goal);
-
                 }
                 if ((grid[j][i] & Square.WALL) != 0) {
                     Wall wall = new Wall(i, j, this);
                     walls.add(wall);
                     floors.add(new Square(i, j, this));
                 }
-//                if ((grid[j][i] & Square.FLOOR) != 0) {
-//                    Square floor = new Square(i, j, this);
-//                    floors.add(floor);
-//                }
                 if ((grid[j][i] & Square.PACK) != 0) {
                     Pack pack = new Pack(i, j, this);
                     packs.add(pack);
@@ -85,6 +97,158 @@ public class Level {
         for (Pack p : packs) {
             grid[p.getRow()][p.getCol()] |= Square.PACK;
         }
+    }
+
+    public String getExactHash() {
+        return getHash(false);
+    }
+
+    public String getUniqueHash() {
+        return getHash(true);
+    }
+
+    private String getHash(boolean unique) {
+        String hash;
+        if (moves != 0) {
+            Level l = new Level("Temp", width, height, startGrid);
+            hash = l.getHash(unique);
+        } else {
+            char[][] cGrid = new char[height][width];
+            for (int i = 0; i < height; i++) {
+                Arrays.fill(cGrid[i], '#');
+            }
+            for (Square floor : floors) {
+                cGrid[floor.getRow()][floor.getCol()] = startGrid[floor.getRow()].charAt(floor.getCol());
+            }
+
+            if (unique) {
+                ArrayList<Position> reachable = MoveHelper.getInstance().getReachable(this);
+                for (Position p : reachable) {
+                    char c = cGrid[p.getRow()][p.getCol()];
+                    if (c == ' ') {
+                        c = '@';
+                    } else if (c == '.') {
+                        c = '+';
+                    }
+                    cGrid[p.getRow()][p.getCol()] = c;
+                }
+            }
+
+            int startX = 0;
+            int startY = 0;
+            int endX = width-1;
+            int endY = height-1;
+            boolean done = false;
+            while (true) {
+                for (int i = 0; i < height; i++) {
+                    if (cGrid[i][startX+1] != '#') {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done) {
+                    break;
+                }
+                startX++;
+            }
+            done = false;
+            while (true) {
+                for (int i = 0; i < height; i++) {
+                    if (cGrid[i][endX-1] != '#') {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done) {
+                    break;
+                }
+                endX--;
+            }
+            done = false;
+            while (true) {
+                for (int i = 0; i < width; i++) {
+                    if (cGrid[startY+1][i] != '#') {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done) {
+                    break;
+                }
+                startY++;
+            }
+            done = false;
+            while (true) {
+                for (int i = 0; i < width; i++) {
+                    if (cGrid[endY-1][i] != '#') {
+                        done = true;
+                        break;
+                    }
+                }
+                if (done) {
+                    break;
+                }
+                endY--;
+            }
+
+            char[][] nGrid = new char[endY-startY+1][endX-startX+1];
+            for (int j = startY; j <= endY; j++) {
+                for (int i = startX; i <= endX; i++) {
+                    nGrid[j-startY][i-startX] = cGrid[j][i];
+                }
+            }
+
+            if (unique) {
+                hash = "FFFFFFFFFFFFFFFF";
+
+                for (int d = 0; d < 4; d++) {
+                    String currentHash = hashCharArray(nGrid);
+                    if (currentHash.compareTo(hash) < 0) {
+                        hash = currentHash;
+                    }
+                    char[][] tmp = new char[nGrid.length][nGrid[0].length];
+                    char[][] tmp2 = new char[nGrid[0].length][nGrid.length];
+                    for (int j = 0; j < tmp.length; j++) {
+                        int row = tmp.length - j - 1;
+                        for (int i = 0; i < tmp[j].length; i++) {
+                            tmp[row][i] = nGrid[j][i];
+                            tmp2[i][row] = nGrid[j][i];
+                        }
+                    }
+                    currentHash = hashCharArray(tmp);
+                    if (currentHash.compareTo(hash) < 0) {
+                        hash = currentHash;
+                    }
+                    nGrid = tmp2;
+                }
+            } else {
+                hash = hashCharArray(nGrid);
+            }
+        }
+
+        return hash;
+    }
+
+    private String hashCharArray(char[][] array) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < array.length; i++) {
+            sb.append(String.copyValueOf(array[i]));
+            sb.append('\n');
+        }
+        return hashString(sb.toString());
+    }
+
+    private String hashString(String s) {
+        String ret = "";
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(s.getBytes());
+            byte[] digest = md.digest();
+            ret = Utility.bytesToHex(digest).substring(0, 16);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ret;
     }
 
     public Move getMove(Direction dir) {
