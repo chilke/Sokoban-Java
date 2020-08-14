@@ -151,10 +151,9 @@ public class SokobanApp {
             if (currentLevel != null) {
                 //TODO - Add logic to finalize old level
             }
-
-            String level = (String)levelsCombo.getSelectedItem();
-            Config.getConfig().setLevel(level);
-            currentLevel = currentLevelSet.getLevel(level);
+            int index = levelsCombo.getSelectedIndex();
+            Config.getConfig().setLevelIndex(index);
+            currentLevel = currentLevelSet.getLevel(index);
             System.out.println("Hash: "+currentLevel.getExactHash());
             levelPanel.setLevel(currentLevel);
             updateMoves();
@@ -175,7 +174,7 @@ public class SokobanApp {
             levelsCombo.setModel(model);
 
             if (currentLevel == null) {
-                levelsCombo.setSelectedItem(Config.getConfig().getLevel());
+                levelsCombo.setSelectedIndex(Config.getConfig().getLevelIndex());
             } else {
                 levelsCombo.setSelectedIndex(0);
             }

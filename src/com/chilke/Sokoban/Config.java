@@ -26,7 +26,7 @@ public class Config {
     private int skinSize = 30;
     private String skin = "HeavyMetal";
     private String levelSet = "Original & Extra";
-    private String level = "1";
+    private int levelIndex = 0;
 
     private transient Timer saveTimer = new Timer(100, new ActionListener() {
         @Override
@@ -171,12 +171,12 @@ public class Config {
         save(false);
     }
 
-    public String getLevel() {
-        return level;
+    public int getLevelIndex() {
+        return levelIndex;
     }
 
-    public void setLevel(String level) {
-        this.level = level;
+    public void setLevelIndex(int levelIndex) {
+        this.levelIndex = levelIndex;
         save(false);
     }
 }

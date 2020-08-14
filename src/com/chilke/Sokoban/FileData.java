@@ -4,10 +4,10 @@ public class FileData {
     private int id;
     private String fileName;
     private String title;
-    private long timestamp;
+    private int timestamp;
     private int state;
 
-    public FileData(int id, String fileName, String title, long timestamp, int state) {
+    public FileData(int id, String fileName, String title, int timestamp, int state) {
         this.id = id;
         this.fileName = fileName;
         this.title = title;
@@ -27,7 +27,7 @@ public class FileData {
         return title;
     }
 
-    public long getTimestamp() {
+    public int getTimestamp() {
         return timestamp;
     }
 

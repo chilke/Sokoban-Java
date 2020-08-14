@@ -21,16 +21,18 @@ public class LevelSet {
     private String description;
     private int maxWidth;
     private int maxHeight;
-    private final HashMap<String, Level> levels = new HashMap();
-    private final ArrayList<String> levelNames = new ArrayList();
+    private final ArrayList<Level> levels = new ArrayList<>();
+    private final ArrayList<String> levelNames = new ArrayList<>();
 
-    public LevelSet(File xmlFile) {
-        filePath = xmlFile.getPath();
+    private int allSolved = 0;
 
-        loadFile(xmlFile, false);
+    public LevelSet(String path) {
+        filePath = path;
+        loadLevels();
     }
 
-    private void loadFile(File xmlFile, boolean loadLevels) {
+    public void loadLevels() {
+        File xmlFile = new File(filePath);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 
         try {
@@ -50,24 +52,22 @@ public class LevelSet {
 //            System.out.println("Description: "+description);
 //            System.out.format("Max Size (%d, %d)\n", maxWidth, maxHeight);
 
-            if (loadLevels) {
-                NodeList levelNodes = collection.getElementsByTagName("Level");
+            NodeList levelNodes = collection.getElementsByTagName("Level");
 
-                for (int i = 0; i < levelNodes.getLength(); i++) {
-                    Element levelElement = (Element) levelNodes.item(i);
-                    String name = levelElement.getAttribute("Id");
-                    int width = Integer.parseInt(levelElement.getAttribute("Width"));
-                    int height = Integer.parseInt(levelElement.getAttribute("Height"));
-                    NodeList lineNodes = levelElement.getElementsByTagName("L");
-                    String[] lines = new String[lineNodes.getLength()];
-                    for (int j = 0; j < lineNodes.getLength(); j++) {
-                        Element lineElement = (Element) lineNodes.item(j);
-                        lines[j] = lineElement.getTextContent();
-                    }
-                    Level level = new Level(name, width, height, lines);
-                    levels.put(name, level);
-                    levelNames.add(level.getName());
+            for (int i = 0; i < levelNodes.getLength(); i++) {
+                Element levelElement = (Element) levelNodes.item(i);
+                String name = levelElement.getAttribute("Id");
+                int width = Integer.parseInt(levelElement.getAttribute("Width"));
+                int height = Integer.parseInt(levelElement.getAttribute("Height"));
+                NodeList lineNodes = levelElement.getElementsByTagName("L");
+                String[] lines = new String[lineNodes.getLength()];
+                for (int j = 0; j < lineNodes.getLength(); j++) {
+                    Element lineElement = (Element) lineNodes.item(j);
+                    lines[j] = lineElement.getTextContent();
                 }
+                Level level = new Level(name, width, height, lines);
+                levels.add(level);
+                levelNames.add(level.getName());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,11 +77,6 @@ public class LevelSet {
 
     public int count() {
         return levels.size();
-    }
-
-    public void loadLevels() {
-        File xmlFile = new File(filePath);
-        loadFile(xmlFile, true);
     }
 
     public void unloadLevels() {
@@ -105,11 +100,11 @@ public class LevelSet {
         return maxHeight;
     }
 
-    public Collection<String> getLevelNames() {
+    public ArrayList<String> getLevelNames() {
         return levelNames;
     }
 
-    public Level getLevel(String name) {
-        return levels.get(name);
+    public Level getLevel(int i) {
+        return levels.get(i);
     }
 }

@@ -28,14 +28,25 @@ public class LevelSetSelector {
         File levelsDir = new File(p.toString());
         if (levelsDir.exists() && levelsDir.isDirectory()) {
             FilenameFilter filter = (dir, name) -> name.endsWith(".slc");
-            File[] files = levelsDir.listFiles(filter);
-            for (File levelsFile : files) {
-                if (levelsFile.isFile()) {
-                    FileData file = SokoData.getInstance().getFile(levelsFile.getName());
-                    LevelSet ls = new LevelSet(levelsFile);
-                    levelSets.put(ls.getTitle(), ls);
-                    levelSetTitles.add(ls.getTitle());
+
+            String[] fileNames = levelsDir.list(filter);
+            for (String fileName : fileNames) {
+                System.out.println(fileName);
+                FileData file = SokoData.getInstance().getFile(fileName);
+                LevelSet ls = new LevelSet(Paths.get(levelsDir.toString(), fileName).toString());
+                if (file == null) {
+                    file = SokoData.getInstance().insertFile(fileName, ls.getTitle());
                 }
+
+                for (int i = 0; i < ls.count(); i++) {
+                    Level l = ls.getLevel(i);
+                    String hash = l.getExactHash();
+
+
+                }
+
+                levelSets.put(ls.getTitle(), ls);
+                levelSetTitles.add(ls.getTitle());
             }
         }
     }

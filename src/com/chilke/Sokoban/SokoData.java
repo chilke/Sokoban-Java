@@ -84,7 +84,7 @@ public class SokoData {
 
             if (rs.next()) {
                 ret = new FileData(rs.getInt("Id"), rs.getString("File"),
-                        rs.getString("Title"), rs.getLong("Timestamp"),
+                        rs.getString("Title"), rs.getInt("Timestamp"),
                         rs.getInt("State"));
             }
         } catch (SQLException ex) {
@@ -93,6 +93,26 @@ public class SokoData {
 
         return ret;
     }
+
+    public FileData insertFile(String name, String title) {
+        String sql = "INSERT INTO Files (File, Title) VALUES(?, ?)";
+        FileData ret = null;
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, name);
+            stmt.setString(2, title);
+
+            stmt.execute();
+
+            ret = getFile(name);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return ret;
+    }
+
+    public
 
     public void getScore(int id) {
         String sql = "select Sol from Scores where Id = ?";
