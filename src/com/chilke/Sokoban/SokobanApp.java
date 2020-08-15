@@ -3,6 +3,7 @@ package com.chilke.Sokoban;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 public class SokobanApp {
     private JFrame frame;
@@ -18,7 +19,7 @@ public class SokobanApp {
     private JLabel movesLabel = null;
     private JLabel pushesLabel = null;
 
-    JComboBox levelSetsCombo = null;
+    JComboBox<LevelSet> levelSetsCombo = null;
     JComboBox levelsCombo = null;
     JComboBox skinsCombo = null;
 
@@ -136,8 +137,12 @@ public class SokobanApp {
 
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-        levelSetsCombo = new JComboBox(levelSetSelector.getLevelSetTitles().toArray());
+        LevelSet[] levelSets = new LevelSet[levelSetSelector.getLevelSets().size()];
+        for (int i = 0; i < levelSets.length; i++) {
+            levelSets[i] = levelSetSelector.getLevelSet(i);
+        }
+        levelSetsCombo = new JComboBox<LevelSet>(levelSets);
+        levelSetsCombo.setRenderer(new LevelSetComboRenderer());
         levelsCombo = new JComboBox();
         skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
 
@@ -164,11 +169,10 @@ public class SokobanApp {
             if (currentLevelSet != null) {
                 currentLevelSet.unloadLevels();
             }
-            String levelSet = (String) levelSetsCombo.getSelectedItem();
-            currentLevelSet = levelSetSelector.getLevelSet(levelSet);
+            currentLevelSet = (LevelSet)levelSetsCombo.getSelectedItem();
             currentLevelSet.loadLevels();
 
-            Config.getConfig().setLevelSet(levelSet);
+            Config.getConfig().setLevelSet(currentLevelSet.getTitle());
 
             DefaultComboBoxModel model = new DefaultComboBoxModel(currentLevelSet.getLevelNames().toArray());
             levelsCombo.setModel(model);
@@ -181,7 +185,8 @@ public class SokobanApp {
         });
 
         skinsCombo.setSelectedItem(Config.getConfig().getSkin());
-        levelSetsCombo.setSelectedItem(Config.getConfig().getLevelSet());
+        LevelSet ls = levelSetSelector.getLevelSet(Config.getConfig().getLevelSet());
+        levelSetsCombo.setSelectedItem(ls);
 
         panel.add(levelSetsCombo);
         panel.add(levelsCombo);

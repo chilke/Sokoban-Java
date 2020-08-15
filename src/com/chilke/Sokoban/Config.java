@@ -27,6 +27,8 @@ public class Config {
     private String skin = "HeavyMetal";
     private String levelSet = "Original & Extra";
     private int levelIndex = 0;
+    private int userId = 1;
+    private String userName = "Craig";
 
     private transient Timer saveTimer = new Timer(100, new ActionListener() {
         @Override
@@ -177,6 +179,24 @@ public class Config {
 
     public void setLevelIndex(int levelIndex) {
         this.levelIndex = levelIndex;
+        save(false);
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+        save(false);
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
         save(false);
     }
 }

@@ -2,17 +2,12 @@ package com.chilke.Sokoban;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
 public class LevelSet {
 
@@ -106,5 +101,13 @@ public class LevelSet {
 
     public Level getLevel(int i) {
         return levels.get(i);
+    }
+
+    public int getAllSolved() {
+        return allSolved;
+    }
+
+    public void setAllSolved(int allSolved) {
+        this.allSolved = allSolved;
     }
 }

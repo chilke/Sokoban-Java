@@ -13,6 +13,8 @@ public class Level {
     private final static char MAN_CHAR = '@';
     private final static char MAN_GOAL_CHAR = '+';
 
+    private int solved;
+
     private final String name;
     private final int width;
     private final int height;
@@ -523,5 +525,13 @@ public class Level {
 
     public int getPushes() {
         return pushes;
+    }
+
+    public int getSolved() {
+        return solved;
+    }
+
+    public void setSolved(int solved) {
+        this.solved = solved;
     }
 }
