@@ -4,12 +4,25 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LevelSetComboRenderer extends DefaultListCellRenderer {
-    private final ImageIcon solvedIcon;
-    private final ImageIcon icon;
+    private ScalingIcon solvedIcon = null;
+    private ScalingIcon icon = null;
+    private int lastHeight = 0;
 
     public LevelSetComboRenderer() {
-        solvedIcon = new ImageIcon(getClass().getResource("/images/SolvedLevelSet.png"));
-        icon = new ImageIcon(getClass().getResource("/images/LevelSet.png"));
+        solvedIcon = new ScalingIcon(getClass().getResource("/images/SolvedLevelSet.png"));
+        icon = new ScalingIcon(getClass().getResource("/images/LevelSet.png"));
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        if (lastHeight != getHeight()) {
+            int size = (int)((double)getHeight()*.9);
+            solvedIcon.setSize(size, size);
+            icon.setSize(size, size);
+            lastHeight = getHeight();
+            revalidate();
+        }
+        super.paint(g);
     }
 
     @Override

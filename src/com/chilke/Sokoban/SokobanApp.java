@@ -248,6 +248,23 @@ public class SokobanApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
+    private void printTree(Component cmp, String indent) {
+        if (cmp == null) {
+            return;
+        }
+
+        System.out.println(indent + cmp.getClass().getSimpleName());
+
+        Container cnt = (Container) cmp;
+        if (cnt == null) {
+            return;
+        }
+
+        for (Component sub : cnt.getComponents()) {
+            printTree(sub, indent+"   ");
+        }
+    }
+
     public static void main(String args[]) {
         SokobanApp app = new SokobanApp();
         app.run();
