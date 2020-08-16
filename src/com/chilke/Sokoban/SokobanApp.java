@@ -20,7 +20,7 @@ public class SokobanApp {
     private JLabel pushesLabel = null;
 
     JComboBox<LevelSet> levelSetsCombo = null;
-    JComboBox levelsCombo = null;
+    JComboBox<Level> levelsCombo = null;
     JComboBox skinsCombo = null;
 
     public void showSettings() {
@@ -135,15 +135,21 @@ public class SokobanApp {
         }
     }
 
+    public void reloadCombos() {
+        levelSetsCombo.setModel(levelSetsCombo.getModel());
+        levelsCombo.setModel(levelsCombo.getModel());
+    }
+
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         LevelSet[] levelSets = new LevelSet[levelSetSelector.getLevelSets().size()];
         for (int i = 0; i < levelSets.length; i++) {
             levelSets[i] = levelSetSelector.getLevelSet(i);
         }
-        levelSetsCombo = new JComboBox<LevelSet>(levelSets);
+        levelSetsCombo = new JComboBox<>(levelSets);
         levelSetsCombo.setRenderer(new LevelSetComboRenderer());
-        levelsCombo = new JComboBox();
+        levelsCombo = new JComboBox<>();
+        levelsCombo.setRenderer(new LevelComboRenderer());
         skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
 
         skinsCombo.addActionListener(e -> {
@@ -159,7 +165,6 @@ public class SokobanApp {
             int index = levelsCombo.getSelectedIndex();
             Config.getConfig().setLevelIndex(index);
             currentLevel = currentLevelSet.getLevel(index);
-            System.out.println("Hash: "+currentLevel.getExactHash());
             levelPanel.setLevel(currentLevel);
             updateMoves();
             levelPanel.requestFocusInWindow();
@@ -174,7 +179,7 @@ public class SokobanApp {
 
             Config.getConfig().setLevelSet(currentLevelSet.getTitle());
 
-            DefaultComboBoxModel model = new DefaultComboBoxModel(currentLevelSet.getLevelNames().toArray());
+            DefaultComboBoxModel<Level> model = new DefaultComboBoxModel<>(currentLevelSet.getLevels().toArray(new Level[currentLevelSet.getLevels().size()]));
             levelsCombo.setModel(model);
 
             if (currentLevel == null) {

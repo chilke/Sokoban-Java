@@ -8,6 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class LevelSet {
 
@@ -17,7 +18,6 @@ public class LevelSet {
     private int maxWidth;
     private int maxHeight;
     private final ArrayList<Level> levels = new ArrayList<>();
-    private final ArrayList<String> levelNames = new ArrayList<>();
 
     private int allSolved = 0;
 
@@ -62,7 +62,6 @@ public class LevelSet {
                 }
                 Level level = new Level(name, width, height, lines);
                 levels.add(level);
-                levelNames.add(level.getName());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,7 +75,6 @@ public class LevelSet {
 
     public void unloadLevels() {
         levels.clear();
-        levelNames.clear();
     }
 
     public String getTitle() {
@@ -95,12 +93,12 @@ public class LevelSet {
         return maxHeight;
     }
 
-    public ArrayList<String> getLevelNames() {
-        return levelNames;
-    }
-
     public Level getLevel(int i) {
         return levels.get(i);
+    }
+
+    public Collection<Level> getLevels() {
+        return levels;
     }
 
     public int getAllSolved() {
