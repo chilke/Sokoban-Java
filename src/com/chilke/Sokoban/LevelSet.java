@@ -7,27 +7,79 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class LevelSet {
 
-    private String filePath;
+    private Path filePath;
     private String title;
     private String description;
     private int maxWidth;
     private int maxHeight;
     private final ArrayList<Level> levels = new ArrayList<>();
 
+    private FileData fileData;
+
     private int allSolved = 0;
 
-    public LevelSet(String path) {
+    public LevelSet(Path path) {
         filePath = path;
+
+        fileData = SokoData.getInstance().getFile(path.getFileName().toString());
+
         loadLevels();
+
+        if (fileData == null) {
+            fileData = SokoData.getInstance().insertFile(path.getFileName().toString(), title);
+        }
+
+        ArrayList<LevelData> levelData = SokoData.getInstance().getLevels(fileData.getId());
+        allSolved = 0xFF;
+
+        for (int i = 0; i < levels.size(); i++) {
+            Level l = levels.get(i);
+            String hash = l.getExactHash();
+
+            LevelData ld = null;
+
+            if (i < levelData.size()) {
+                ld = levelData.get(i);
+            }
+
+            if (ld == null || !hash.equals(ld.getHash())) {
+                if (ld != null) {
+                    System.out.format("Hash mismatch, deleting level %s, %d\n", path.getFileName(), i);
+                    SokoData.getInstance().deleteLevel(fileData.getId(), i);
+                }
+                System.out.format("Creating level %s, %d\n", path.getFileName().toString(), i);
+                ld = SokoData.getInstance().createLevel(fileData.getId(), i, hash);
+                if (i < levelData.size()) {
+                    levelData.set(i, ld);
+                } else {
+                    while (i > levelData.size()) {
+                        levelData.add(null);
+                    }
+                    levelData.add(ld);
+                }
+            }
+
+            if (ld != null && ld.getScoresSolvedMask() != ld.getSolvedMask()) {
+                SokoData.getInstance().updateLevelSolved(ld.getId(), ld.getScoresSolvedMask());
+                ld.setSolvedMask(ld.getScoresSolvedMask());
+            }
+
+            if (ld != null) {
+                allSolved &= ld.getSolvedMask();
+            } else {
+                allSolved = 0;
+            }
+        }
     }
 
     public void loadLevels() {
-        File xmlFile = new File(filePath);
+        File xmlFile = new File(filePath.toString());
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 
         try {
