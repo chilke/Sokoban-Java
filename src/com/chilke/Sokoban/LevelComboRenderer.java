@@ -4,27 +4,39 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
 
 public class LevelComboRenderer extends DefaultListCellRenderer {
-    private ImageIcon solvedIcon = null;
-    private ImageIcon icon = null;
-//    private int lastHeight = 0;
+    private ScalingIcon solvedIcon = null;
+    private ScalingIcon icon = null;
+    private int lastSize = 0;
 
     public LevelComboRenderer() {
-        solvedIcon = new ImageIcon(getClass().getResource("/images/SolvedLevel.png"));
-        icon = new ImageIcon(getClass().getResource("/images/Level.png"));
+        solvedIcon = new ScalingIcon(getClass().getResource("/images/SolvedLevel.png"));
+        icon = new ScalingIcon(getClass().getResource("/images/Level.png"));
+
+        Font f = getFont();
+        resizeForFont(f);
     }
-//
-//    @Override
-//    public void paint(Graphics g) {
-//        if (lastHeight != getHeight()) {
-//            int size = (int)((double)getHeight()*.9);
-//            solvedIcon.setSize(size, size);
-//            icon.setSize(size, size);
-//            lastHeight = getHeight();
-//        }
-//        super.paint(g);
-//    }
+
+    private void resizeForFont(Font f) {
+        if (lastSize != f.getSize() && icon != null) {
+            lastSize = f.getSize();
+            BufferedImage img = icon.getOriginalImage();
+            Graphics2D g = img.createGraphics();
+            FontMetrics metrics = g.getFontMetrics(f);
+            solvedIcon.setSize(metrics.getHeight(), metrics.getHeight());
+            icon.setSize(metrics.getHeight(), metrics.getHeight());
+
+            SwingUtilities.updateComponentTreeUI(this);
+        }
+    }
+
+    @Override
+    public void setFont(Font font) {
+        super.setFont(font);
+        resizeForFont(font);
+    }
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

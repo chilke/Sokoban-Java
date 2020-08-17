@@ -19,6 +19,10 @@ public class ScalingIcon extends ImageIcon {
         setSize(1, 1);
     }
 
+    public BufferedImage getOriginalImage() {
+        return originalImage;
+    }
+
     public void setSize(int width, int height) {
         BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = scaledImage.createGraphics();

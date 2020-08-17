@@ -150,6 +150,7 @@ public class SokobanApp {
         levelSetsCombo.setRenderer(new LevelSetComboRenderer());
         levelsCombo = new JComboBox<>();
         levelsCombo.setRenderer(new LevelComboRenderer());
+//        levelsCombo.setFont(levelsCombo.getFont().deriveFont(25f));
         skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
 
         skinsCombo.addActionListener(e -> {
