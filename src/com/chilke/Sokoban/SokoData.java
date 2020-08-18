@@ -1,10 +1,14 @@
 package com.chilke.Sokoban;
 
+import jdk.jshell.execution.Util;
+
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SokoData {
     private final Connection conn;
@@ -68,12 +72,6 @@ public class SokoData {
 
         return id;
     }
-
-//In Scores.Sol, binary data represents LURD move list with the following 2 bit sets
-//00 - Up
-//01 - Right
-//10 - Down
-//11 - Left
 
     public FileData getFile(String name) {
         String sql = "select * from Files where File = ?";
@@ -238,6 +236,25 @@ public class SokoData {
                 System.out.println("Couldn't find score");
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void createScore(String hash, String lurdSolution, int moves, int pushes) {
+        String sql = "insert into Scores (Hash, User, Time, M, P, Sol) values (?,?,?,?,?,?)";
+        byte[] bytes = Utility.lurdToBytes(lurdSolution);
+
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, hash);
+            stmt.setInt(2, Config.getConfig().getUserId());
+            stmt.setInt(3, (int)(System.currentTimeMillis()/1000));
+            stmt.setInt(4, moves);
+            stmt.setInt(5, pushes);
+            stmt.setBytes(6, bytes);
+
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }

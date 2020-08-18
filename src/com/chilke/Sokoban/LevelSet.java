@@ -27,55 +27,7 @@ public class LevelSet {
     public LevelSet(Path path) {
         filePath = path;
 
-        fileData = SokoData.getInstance().getFile(path.getFileName().toString());
-
         loadLevels();
-
-        if (fileData == null) {
-            fileData = SokoData.getInstance().insertFile(path.getFileName().toString(), title);
-        }
-
-        ArrayList<LevelData> levelData = SokoData.getInstance().getLevels(fileData.getId());
-        allSolved = 0xFF;
-
-        for (int i = 0; i < levels.size(); i++) {
-            Level l = levels.get(i);
-            String hash = l.getExactHash();
-
-            LevelData ld = null;
-
-            if (i < levelData.size()) {
-                ld = levelData.get(i);
-            }
-
-            if (ld == null || !hash.equals(ld.getHash())) {
-                if (ld != null) {
-                    System.out.format("Hash mismatch, deleting level %s, %d\n", path.getFileName(), i);
-                    SokoData.getInstance().deleteLevel(fileData.getId(), i);
-                }
-                System.out.format("Creating level %s, %d\n", path.getFileName().toString(), i);
-                ld = SokoData.getInstance().createLevel(fileData.getId(), i, hash);
-                if (i < levelData.size()) {
-                    levelData.set(i, ld);
-                } else {
-                    while (i > levelData.size()) {
-                        levelData.add(null);
-                    }
-                    levelData.add(ld);
-                }
-            }
-
-            if (ld != null && ld.getScoresSolvedMask() != ld.getSolvedMask()) {
-                SokoData.getInstance().updateLevelSolved(ld.getId(), ld.getScoresSolvedMask());
-                ld.setSolvedMask(ld.getScoresSolvedMask());
-            }
-
-            if (ld != null) {
-                allSolved &= ld.getSolvedMask();
-            } else {
-                allSolved = 0;
-            }
-        }
     }
 
     public void loadLevels() {
@@ -118,6 +70,55 @@ public class LevelSet {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println(e.getMessage());
+        }
+
+        fileData = SokoData.getInstance().getFile(filePath.getFileName().toString());
+
+        if (fileData == null) {
+            fileData = SokoData.getInstance().insertFile(filePath.getFileName().toString(), title);
+        }
+
+        ArrayList<LevelData> levelData = SokoData.getInstance().getLevels(fileData.getId());
+        allSolved = 0xFF;
+
+        for (int i = 0; i < levels.size(); i++) {
+            Level l = levels.get(i);
+            String hash = l.getExactHash();
+
+            LevelData ld = null;
+
+            if (i < levelData.size()) {
+                ld = levelData.get(i);
+            }
+
+            if (ld == null || !hash.equals(ld.getHash())) {
+                if (ld != null) {
+                    System.out.format("Hash mismatch, deleting level %s, %d\n", filePath.getFileName(), i);
+                    SokoData.getInstance().deleteLevel(fileData.getId(), i);
+                }
+                System.out.format("Creating level %s, %d\n", filePath.getFileName().toString(), i);
+                ld = SokoData.getInstance().createLevel(fileData.getId(), i, hash);
+                if (i < levelData.size()) {
+                    levelData.set(i, ld);
+                } else {
+                    while (i > levelData.size()) {
+                        levelData.add(null);
+                    }
+                    levelData.add(ld);
+                }
+            }
+
+            if (ld != null && ld.getScoresSolvedMask() != ld.getSolvedMask()) {
+                SokoData.getInstance().updateLevelSolved(ld.getId(), ld.getScoresSolvedMask());
+                ld.setSolvedMask(ld.getScoresSolvedMask());
+            }
+
+            if (ld != null) {
+                l.setSolved(ld.getSolvedMask());
+                allSolved &= ld.getSolvedMask();
+            } else {
+                allSolved = 0;
+            }
         }
     }
 

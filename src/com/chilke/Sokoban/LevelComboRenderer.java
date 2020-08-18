@@ -46,7 +46,7 @@ public class LevelComboRenderer extends DefaultListCellRenderer {
         if ((l.getSolved() & Config.getConfig().getUserId()) != 0) {
             this.setIcon(solvedIcon);
         } else {
-            this.setIcon(solvedIcon);
+            this.setIcon(icon);
         }
         return this;
     }

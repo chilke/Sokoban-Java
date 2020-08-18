@@ -534,4 +534,21 @@ public class Level {
     public void setSolved(int solved) {
         this.solved = solved;
     }
+
+    public String getLurdSolution() {
+        String ret = null;
+        if (isComplete()) {
+            StringBuilder solution = new StringBuilder(moves);
+
+            for (ArrayList<Move> list : movesLists) {
+                for (Move move : list) {
+                    solution.append(move.getDir().getLurd());
+                }
+            }
+
+            ret = solution.toString();
+        }
+
+        return ret;
+    }
 }

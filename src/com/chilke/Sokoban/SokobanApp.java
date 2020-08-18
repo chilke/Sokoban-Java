@@ -121,6 +121,14 @@ public class SokobanApp {
     }
 
     public void nextLevel() {
+        if (currentLevel.isComplete()) {
+            String solution = currentLevel.getLurdSolution();
+            System.out.println(solution);
+            SokoData.getInstance().createScore(currentLevel.getExactHash(), solution, currentLevel.getMoves(),
+                    currentLevel.getPushes());
+
+            currentLevel.reset();
+        }
         int index = levelsCombo.getSelectedIndex() + 1;
         if (index < levelsCombo.getItemCount()) {
             levelsCombo.setSelectedIndex(index);

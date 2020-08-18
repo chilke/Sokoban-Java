@@ -322,7 +322,6 @@ public class LevelPanel extends JPanel {
                     animationTimer.stop();
                     app.enableInputs(true);
                     if (level.isComplete()) {
-                        level.reset();
                         app.nextLevel();
                     } else if (moveAnimationMs > 0) {
                         moveEndTimer.start();

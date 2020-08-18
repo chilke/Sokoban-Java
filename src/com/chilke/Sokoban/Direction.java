@@ -1,15 +1,21 @@
 package com.chilke.Sokoban;
 
 enum Direction {
-    NONE(-1),
-    UP(0),
-    LEFT(1),
-    DOWN(2),
-    RIGHT(3);
+    NONE(-1, 'N'),
+    UP(0, 'U'),
+    LEFT(1, 'L'),
+    DOWN(2, 'D'),
+    RIGHT(3, 'R');
 
     public final int value;
+    private final char lurd;
 
-    Direction(int value) {
+    Direction(int value, char lurd) {
         this.value = value;
+        this.lurd = lurd;
+    }
+
+    public char getLurd() {
+        return lurd;
     }
 }
