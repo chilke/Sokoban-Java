@@ -20,10 +20,10 @@ public class Level {
     private final int height;
     private final int[][] grid;
 
-    private final ArrayList<Pack> packs = new ArrayList();
-    private final ArrayList<Square> goals = new ArrayList();
-    private final ArrayList<Square> floors = new ArrayList();
-    private final ArrayList<Wall> walls = new ArrayList();
+    private final ArrayList<Pack> packs = new ArrayList<>();
+    private final ArrayList<Square> goals = new ArrayList<>();
+    private final ArrayList<Square> floors = new ArrayList<>();
+    private final ArrayList<Wall> walls = new ArrayList<>();
     private final String[] startGrid;
     private Man man;
 
@@ -53,6 +53,8 @@ public class Level {
         man = null;
         floors.clear();
         walls.clear();
+        movesList.clear();
+        movesLists.clear();
 
         moves = 0;
         pushes = 0;

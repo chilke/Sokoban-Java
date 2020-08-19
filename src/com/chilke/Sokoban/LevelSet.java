@@ -122,6 +122,21 @@ public class LevelSet {
         }
     }
 
+    public boolean updateAllSolved() {
+        int curAllSolved = allSolved;
+        if (!levels.isEmpty()) {
+            allSolved = 0xFF;
+
+            for (Level l : levels) {
+                allSolved &= l.getSolved();
+            }
+        } else {
+            allSolved = SokoData.getInstance().getFileAllSolved(fileData.getId());
+        }
+
+        return (allSolved != curAllSolved);
+    }
+
     public int count() {
         return levels.size();
     }
@@ -147,7 +162,10 @@ public class LevelSet {
     }
 
     public Level getLevel(int i) {
-        return levels.get(i);
+        if (i < levels.size()) {
+            return levels.get(i);
+        }
+        return null;
     }
 
     public Collection<Level> getLevels() {
@@ -160,5 +178,23 @@ public class LevelSet {
 
     public void setAllSolved(int allSolved) {
         this.allSolved = allSolved;
+    }
+
+    public int getFileId() {
+        if (fileData != null) {
+            return fileData.getId();
+        }
+
+        return -1;
+    }
+
+    public int getLevelId(Level l) {
+        for (int i = 0; i < levels.size(); i++) {
+            if (l == levels.get(i)) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }

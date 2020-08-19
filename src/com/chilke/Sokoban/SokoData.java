@@ -146,6 +146,33 @@ public class SokoData {
         return ret;
     }
 
+    public ArrayList<LevelData> getLevels(String hash) {
+        String sql = "select Id, File, Nr, Hash, Solved, sum(User) as ScoresSolved from (" +
+                "select distinct l.Id, l.File, l.Nr, l.Hash, l.Solved, " +
+                "case when s.User is null then 0 else 1<<(s.User-1) end as User " +
+                "from Levels l left join Scores s on l.Hash = s.Hash and s.User < 100 " +
+                "where l.Hash = ?) " +
+                "group by Id, File, Nr, Hash";
+        ArrayList<LevelData> ret = new ArrayList<>();
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, hash);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                LevelData ld = new LevelData(rs.getInt("Id"), rs.getInt("File"),
+                        rs.getInt("Nr"), rs.getString("Hash"),
+                        rs.getInt("Solved"), rs.getInt("ScoresSolved"));
+                ret.add(ld);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return ret;
+    }
+
     public LevelData getLevel(int fileId, int index) {
         String sql = "select Id, File, Nr, Hash, Solved, sum(User) as ScoresSolved from (" +
                 "select distinct l.Id, l.File, l.Nr, l.Hash, l.Solved, " +
@@ -219,6 +246,26 @@ public class SokoData {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public int getFileAllSolved(int fileId) {
+        String sql = "select Solved from Levels " +
+                "where File = ?";
+        int allSolved = 0;
+        try {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, fileId);
+
+            ResultSet rs = stmt.executeQuery();
+            allSolved = 0xFF;
+            while (rs.next()) {
+                allSolved &= rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        return allSolved;
     }
 
     public void getScore(int id) {

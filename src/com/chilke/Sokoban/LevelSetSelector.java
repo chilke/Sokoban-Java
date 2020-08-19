@@ -52,6 +52,15 @@ public class LevelSetSelector {
         return null;
     }
 
+    public LevelSet getLevelSetByFileId(int id) {
+        for (LevelSet ls : levelSets) {
+            if (id == ls.getFileId()) {
+                return ls;
+            }
+        }
+        return null;
+    }
+
     public LevelSet getLevelSet(int i) {
         if (i < levelSets.size()) {
             return levelSets.get(i);

@@ -3,6 +3,7 @@ package com.chilke.Sokoban;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class SokobanApp {
@@ -123,22 +124,66 @@ public class SokobanApp {
     public void nextLevel() {
         if (currentLevel.isComplete()) {
             String solution = currentLevel.getLurdSolution();
-            System.out.println(solution);
             SokoData.getInstance().createScore(currentLevel.getExactHash(), solution, currentLevel.getMoves(),
                     currentLevel.getPushes());
+            ArrayList<LevelData> lds = SokoData.getInstance().getLevels(currentLevel.getExactHash());
+
+            for (LevelData ld : lds) {
+                if (ld.getScoresSolvedMask() != ld.getSolvedMask()) {
+                    SokoData.getInstance().updateLevelSolved(ld.getId(), ld.getScoresSolvedMask());
+                    ld.setSolvedMask(ld.getScoresSolvedMask());
+                }
+
+                LevelSet ls = levelSetSelector.getLevelSetByFileId(ld.getFile());
+                Level l = ls.getLevel(ld.getNumber());
+
+                if (l != null) {
+                    l.setSolved(ld.getSolvedMask());
+                }
+
+                ls.updateAllSolved();
+            }
 
             currentLevel.reset();
         }
         int index = levelsCombo.getSelectedIndex() + 1;
+
+        //First find the next unsolved level in this set
+        while (index < levelsCombo.getItemCount() &&
+                (levelsCombo.getItemAt(index).getSolved() & Config.getConfig().getUserId()) != 0) {
+            index++;
+        }
+        //Next see if any levels are unsolved in this set
+        if (index >= levelsCombo.getItemCount()) {
+            index = 0;
+            while (index < levelsCombo.getItemCount() &&
+                    (levelsCombo.getItemAt(index).getSolved() & Config.getConfig().getUserId()) != 0) {
+                index++;
+            }
+        }
+
+        //Now see if we're done with this level set
         if (index < levelsCombo.getItemCount()) {
             levelsCombo.setSelectedIndex(index);
         } else {
             index = levelSetsCombo.getSelectedIndex() + 1;
-            if (index < levelSetsCombo.getItemCount()) {
+            while (index < levelSetsCombo.getItemCount() &&
+                    (levelSetsCombo.getItemAt(index).getAllSolved() & Config.getConfig().getUserId()) != 0) {
+                index++;
+            }
+            if (index >= levelSetsCombo.getItemCount()) {
+                index = 0;
+                while (index < levelSetsCombo.getItemCount() &&
+                        (levelSetsCombo.getItemAt(index).getAllSolved() & Config.getConfig().getUserId()) != 0) {
+                    index++;
+                }
+            }
+            if (index >= levelSetsCombo.getItemCount()) {
+                //Wow, we've solved all levels, should really let someone know
+                index = -1;
+            }
+            if (index != -1) {
                 levelSetsCombo.setSelectedIndex(index);
-            } else {
-                //TODO - Logic to look for first level set with unsolved level
-                levelSetsCombo.setSelectedIndex(0);
             }
         }
     }
@@ -168,9 +213,6 @@ public class SokobanApp {
         });
 
         levelsCombo.addActionListener(e -> {
-            if (currentLevel != null) {
-                //TODO - Add logic to finalize old level
-            }
             int index = levelsCombo.getSelectedIndex();
             Config.getConfig().setLevelIndex(index);
             currentLevel = currentLevelSet.getLevel(index);
@@ -194,7 +236,15 @@ public class SokobanApp {
             if (currentLevel == null) {
                 levelsCombo.setSelectedIndex(Config.getConfig().getLevelIndex());
             } else {
-                levelsCombo.setSelectedIndex(0);
+                int index = 0;
+                while (index < levelsCombo.getItemCount() &&
+                        (levelsCombo.getItemAt(index).getSolved() & Config.getConfig().getUserId()) != 0) {
+                    index++;
+                }
+                if (index >= levelsCombo.getItemCount()) {
+                    index = 0;
+                }
+                levelsCombo.setSelectedIndex(index);
             }
         });
 
