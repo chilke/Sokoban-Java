@@ -21,8 +21,8 @@ public class Skin {
 
     private static final int MAX_TRANS_DIFF = 10;
 
-    private static final HashMap<String, Section> sectionNameMap = new HashMap();
-    private static final HashMap<String, SkinImage> imageNameMap = new HashMap();
+    private static final HashMap<String, Section> sectionNameMap = new HashMap<>();
+    private static final HashMap<String, SkinImage> imageNameMap = new HashMap<>();
 
     private final int[] skinImageIds = new int[SkinImage.MAX_VALUE+1];
 

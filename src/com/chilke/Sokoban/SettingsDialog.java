@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Hashtable;
 
 public class SettingsDialog extends JDialog {
 
@@ -29,6 +30,11 @@ public class SettingsDialog extends JDialog {
         layout.add(label, constraints);
 
         animationSpeedSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, config.getAnimationSpeed());
+        Hashtable<Integer, JLabel> labels = new Hashtable<>();
+        labels.put(0, new JLabel("Slow"));
+        labels.put(100, new JLabel("Fast"));
+        animationSpeedSlider.setLabelTable(labels);
+        animationSpeedSlider.setPaintLabels(true);
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.insets = new Insets(10, 0, 0, 10);

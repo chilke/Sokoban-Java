@@ -7,9 +7,11 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class LevelPanel extends JPanel {
+    private final static int MaxAnimationTime = 500;
 
     private Level level;
     private Skin skin;
+
     private int skinSize;
 
     private int bgOffsetX;

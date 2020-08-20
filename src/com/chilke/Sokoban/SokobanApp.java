@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Vector;
 
 public class SokobanApp {
     private JFrame frame;
@@ -22,7 +21,7 @@ public class SokobanApp {
 
     JComboBox<LevelSet> levelSetsCombo = null;
     JComboBox<Level> levelsCombo = null;
-    JComboBox skinsCombo = null;
+    JComboBox<String> skinsCombo = null;
 
     public void showSettings() {
         SettingsDialog s = new SettingsDialog(frame);
@@ -82,12 +81,7 @@ public class SokobanApp {
 
         item = new JMenuItem("Exit");
         item.setMnemonic(KeyEvent.VK_E);
-        item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
+        item.addActionListener(e -> System.exit(0));
         fileMenu.add(item);
 
         return menuBar;
@@ -188,11 +182,6 @@ public class SokobanApp {
         }
     }
 
-    public void reloadCombos() {
-        levelSetsCombo.setModel(levelSetsCombo.getModel());
-        levelsCombo.setModel(levelsCombo.getModel());
-    }
-
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         LevelSet[] levelSets = new LevelSet[levelSetSelector.getLevelSets().size()];
@@ -204,7 +193,7 @@ public class SokobanApp {
         levelsCombo = new JComboBox<>();
         levelsCombo.setRenderer(new LevelComboRenderer());
 //        levelsCombo.setFont(levelsCombo.getFont().deriveFont(25f));
-        skinsCombo = new JComboBox(skinSelector.getSkinTitles().toArray());
+        skinsCombo = new JComboBox<>(skinSelector.getSkinTitles().toArray(new String[0]));
 
         skinsCombo.addActionListener(e -> {
             levelPanel.setSkin(skinSelector.getSkin((String)skinsCombo.getSelectedItem()));
@@ -226,11 +215,14 @@ public class SokobanApp {
                 currentLevelSet.unloadLevels();
             }
             currentLevelSet = (LevelSet)levelSetsCombo.getSelectedItem();
-            currentLevelSet.loadLevels();
+
+            if (currentLevelSet != null) {
+                currentLevelSet.loadLevels();
+            }
 
             Config.getConfig().setLevelSet(currentLevelSet.getTitle());
 
-            DefaultComboBoxModel<Level> model = new DefaultComboBoxModel<>(currentLevelSet.getLevels().toArray(new Level[currentLevelSet.getLevels().size()]));
+            DefaultComboBoxModel<Level> model = new DefaultComboBoxModel<>(currentLevelSet.getLevels().toArray(new Level[0]));
             levelsCombo.setModel(model);
 
             if (currentLevel == null) {
@@ -312,24 +304,7 @@ public class SokobanApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    private void printTree(Component cmp, String indent) {
-        if (cmp == null) {
-            return;
-        }
-
-        System.out.println(indent + cmp.getClass().getSimpleName());
-
-        Container cnt = (Container) cmp;
-        if (cnt == null) {
-            return;
-        }
-
-        for (Component sub : cnt.getComponents()) {
-            printTree(sub, indent+"   ");
-        }
-    }
-
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         SokobanApp app = new SokobanApp();
         app.run();
     }
