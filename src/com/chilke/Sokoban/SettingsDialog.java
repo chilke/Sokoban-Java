@@ -26,6 +26,7 @@ public class SettingsDialog extends JDialog {
         JLabel label = new JLabel("Animation Speed:");
         constraints.gridx = 0;
         constraints.gridy = 0;
+        constraints.anchor = GridBagConstraints.LINE_START;
         constraints.insets = new Insets(10, 10, 0, 0);
         layout.add(label, constraints);
 

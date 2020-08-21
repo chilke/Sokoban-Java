@@ -12,12 +12,15 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
 public class Config {
     private static Config config = null;
+    public static final int ANIMATION_SPEED_OFF = 0;
+    public static final int ANIMATION_SPEED_FAST = 75;
+    public static final int ANIMATION_SPEED_NORMAL = 125;
+    public static final int ANIMATION_SPEED_SLOW = 250;
 
-    private int animationSpeed = 50;
+    private int animationSpeed = ANIMATION_SPEED_NORMAL;
     private boolean fullScreen = false;
     private int locationX = 100;
     private int locationY = 100;

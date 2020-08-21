@@ -84,6 +84,33 @@ public class SokobanApp {
         item.addActionListener(e -> System.exit(0));
         fileMenu.add(item);
 
+        JMenu optionsMenu = new JMenu("Options");
+        optionsMenu.setMnemonic(KeyEvent.VK_O);
+        menuBar.add(optionsMenu);
+
+        JMenuItem speed = new JMenu("Animation Speed");
+        JMenuItem subSpeed = new JMenuItem("Off");
+        subSpeed.addActionListener(e -> {
+            Config.getConfig().setAnimationSpeed(Config.ANIMATION_SPEED_OFF);
+        });
+        speed.add(subSpeed);
+        subSpeed = new JMenuItem("Fast");
+        subSpeed.addActionListener(e -> {
+            Config.getConfig().setAnimationSpeed(Config.ANIMATION_SPEED_FAST);
+        });
+        speed.add(subSpeed);
+        subSpeed = new JMenuItem("Normal");
+        subSpeed.addActionListener(e -> {
+            Config.getConfig().setAnimationSpeed(Config.ANIMATION_SPEED_NORMAL);
+        });
+        speed.add(subSpeed);
+        subSpeed = new JMenuItem("Slow");
+        subSpeed.addActionListener(e -> {
+            Config.getConfig().setAnimationSpeed(Config.ANIMATION_SPEED_SLOW);
+        });
+        speed.add(subSpeed);
+        optionsMenu.add(speed);
+
         return menuBar;
     }
 

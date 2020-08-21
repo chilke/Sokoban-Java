@@ -23,7 +23,6 @@ public class LevelPanel extends JPanel {
     private int moveEndTime = 500;
 
     private int frameTime = 1000/60;
-    private int moveAnimationMs = 200;
     private long moveStartTime;
     private int currentMoveX = 0;
     private int currentMoveY = 0;
@@ -295,6 +294,7 @@ public class LevelPanel extends JPanel {
     private ActionListener animationAction = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+            int moveAnimationMs = Config.getConfig().getAnimationSpeed();
             if (moves != null) {
                 moveEndTimer.stop();
                 long currentTime = System.currentTimeMillis();
